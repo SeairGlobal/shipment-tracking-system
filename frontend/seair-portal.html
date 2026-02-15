@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seair Operations Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-indigo-900 text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-anchor text-2xl"></i>
+                    <h1 class="text-2xl font-bold">Seair Operations Portal</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <span id="teamBadge" class="px-4 py-1 bg-indigo-700 rounded-full text-sm"></span>
+                    <span id="userDisplay" class="text-sm"></span>
+                    <button onclick="logout()" class="bg-indigo-700 hover:bg-indigo-600 px-4 py-2 rounded">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-6 py-8">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="max-w-md mx-auto mt-20">
+            <div class="bg-white rounded-lg shadow-xl p-8">
+                <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Seair Team Login</h2>
+                <form id="loginForm" onsubmit="login(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="loginEmail" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-900 text-white py-2 rounded-lg hover:bg-indigo-800">
+                        Login
+                    </button>
+                </form>
+                <div id="loginError" class="mt-4 text-red-600 text-sm text-center hidden"></div>
+            </div>
+        </div>
+
+        <!-- Operations Dashboard -->
+        <div id="operationsScreen" class="hidden">
+            <!-- Tabs -->
+            <div class="mb-6 border-b border-gray-200">
+                <nav class="flex space-x-8">
+                    <button onclick="switchTab('shipments')" id="tabShipments"
+                            class="tab-button py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-boxes mr-2"></i>Shipments
+                    </button>
+                    <button onclick="switchTab('create')" id="tabCreate"
+                            class="tab-button py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-plus-circle mr-2"></i>Create Shipment
+                    </button>
+                    <button onclick="switchTab('documents')" id="tabDocuments"
+                            class="tab-button py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-file-upload mr-2"></i>Upload Documents
+                    </button>
+                    <button onclick="switchTab('exceptions')" id="tabExceptions"
+                            class="tab-button py-4 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-exclamation-circle mr-2"></i>Exceptions
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Shipments Tab -->
+            <div id="shipmentsTab" class="tab-content">
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800">Active Shipments</h2>
+                        <button onclick="loadShipments()" class="text-indigo-600 hover:text-indigo-800">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Booking</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Container</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Milestone</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shipmentsTable" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Shipment Tab -->
+            <div id="createTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-8 max-w-3xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Create New Shipment</h2>
+                    <form id="createShipmentForm" onsubmit="createShipment(event)" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Booking Number *</label>
+                                <input type="text" id="newBookingNumber" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Container Number</label>
+                                <input type="text" id="newContainerNumber"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Origin Port</label>
+                                <input type="text" id="newOriginPort"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Destination Port</label>
+                                <input type="text" id="newDestinationPort"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Vessel Name</label>
+                                <input type="text" id="newVesselName"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Steamship Line</label>
+                                <input type="text" id="newSteamshipLine"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-900 text-white py-3 rounded-lg hover:bg-indigo-800">
+                            <i class="fas fa-plus-circle mr-2"></i>Create Shipment
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Documents Tab -->
+            <div id="documentsTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-8 max-w-3xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Upload Documents</h2>
+                    <form id="uploadForm" onsubmit="uploadDocument(event)" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Shipment *</label>
+                            <select id="uploadShipmentId" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Select Shipment --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Document Type *</label>
+                            <select id="uploadDocumentType" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Select Type --</option>
+                                <option value="PO">Purchase Order</option>
+                                <option value="INVOICE">Shipper Invoice</option>
+                                <option value="PACKING_LIST">Packing List</option>
+                                <option value="CBP_7501">CBP Form 7501</option>
+                                <option value="ENTRY_SUMMARY">Entry Summary</option>
+                                <option value="COMMERCIAL">Commercial Document</option>
+                                <option value="SEAIR_INVOICE">Seair Invoice</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select File *</label>
+                            <input type="file" id="uploadFile" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <p class="mt-2 text-sm text-gray-500">Allowed: PDF, Excel, Word, Images (max 50MB)</p>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-900 text-white py-3 rounded-lg hover:bg-indigo-800">
+                            <i class="fas fa-upload mr-2"></i>Upload Document
+                        </button>
+                    </form>
+                    <div id="uploadStatus" class="mt-4 hidden"></div>
+                </div>
+            </div>
+
+            <!-- Exceptions Tab -->
+            <div id="exceptionsTab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-8 max-w-3xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6">Report Exception</h2>
+                    <form id="exceptionForm" onsubmit="createException(event)" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Shipment *</label>
+                            <select id="exceptionShipmentId" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Select Shipment --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Exception Type *</label>
+                            <select id="exceptionType" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="HOLD">Customs Hold</option>
+                                <option value="EXAM">Customs Exam</option>
+                                <option value="DELAY">Delay</option>
+                                <option value="DAMAGE">Damage</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Severity *</label>
+                            <select id="exceptionSeverity" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                            <input type="text" id="exceptionTitle" required
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="exceptionDescription" rows="4"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Report Exception
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Milestone Modal -->
+        <div id="milestoneModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-8 w-full max-w-2xl bg-white rounded-lg shadow-2xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Update Milestone</h2>
+                    <button onclick="closeMilestoneModal()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                <form id="milestoneForm" onsubmit="submitMilestone(event)" class="space-y-4">
+                    <input type="hidden" id="milestoneShipmentId">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Milestone *</label>
+                        <select id="milestoneName" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <option value="CONTAINER_LOADED">Container Loaded</option>
+                            <option value="VESSEL_DEPARTED">Vessel Departed</option>
+                            <option value="PORT_OF_DISCHARGE">Port of Discharge</option>
+                            <option value="RAIL_DEPARTED">Rail Departed</option>
+                            <option value="PORT_OF_ENTRY">Port of Entry</option>
+                            <option value="CUSTOMS_RELEASED">Customs Released</option>
+                            <option value="DISCHARGE_COMPLETE">Discharge Complete</option>
+                            <option value="DOCUMENTS_AVAILABLE">Documents Available</option>
+                            <option value="PICKUP_COMPLETE">Pickup Complete</option>
+                            <option value="INVOICE_SENT">Invoice Sent</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <input type="text" id="milestoneLocation"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                        <textarea id="milestoneNotes" rows="3"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-900 text-white py-2 rounded-lg hover:bg-indigo-800">
+                        Update Milestone
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = localStorage.getItem('seairAuthToken');
+        let currentUser = null;
+        let allShipments = [];
+
+        window.onload = () => {
+            if (authToken) {
+                const user = JSON.parse(localStorage.getItem('seairUser'));
+                currentUser = user;
+                showOperations();
+                loadOperationsData();
+            } else {
+                showLogin();
+            }
+        };
+
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('operationsScreen').classList.add('hidden');
+        }
+
+        function showOperations() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('operationsScreen').classList.remove('hidden');
+            document.getElementById('userDisplay').textContent = `${currentUser.full_name}`;
+            document.getElementById('teamBadge').textContent = currentUser.team || 'SEAIR';
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (!['SEAIR_ORIGIN', 'SEAIR_US', 'ADMIN'].includes(data.user.role)) {
+                        document.getElementById('loginError').textContent = 'Unauthorized - Seair team only';
+                        document.getElementById('loginError').classList.remove('hidden');
+                        return;
+                    }
+
+                    authToken = data.access_token;
+                    currentUser = data.user;
+                    localStorage.setItem('seairAuthToken', authToken);
+                    localStorage.setItem('seairUser', JSON.stringify(currentUser));
+                    showOperations();
+                    loadOperationsData();
+                } else {
+                    document.getElementById('loginError').textContent = data.error || 'Login failed';
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('loginError').textContent = 'Connection error';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('seairAuthToken');
+            localStorage.removeItem('seairUser');
+            authToken = null;
+            currentUser = null;
+            showLogin();
+        }
+
+        async function loadOperationsData() {
+            await loadShipments();
+            populateShipmentSelects();
+        }
+
+        async function loadShipments() {
+            try {
+                const response = await fetch(`${API_BASE}/shipments`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const data = await response.json();
+                allShipments = data.shipments || [];
+                renderShipmentsTable();
+                populateShipmentSelects();
+            } catch (error) {
+                console.error('Error loading shipments:', error);
+            }
+        }
+
+        function renderShipmentsTable() {
+            const tbody = document.getElementById('shipmentsTable');
+            tbody.innerHTML = allShipments.map(s => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${s.booking_number}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${s.container_number || 'Pending'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${s.current_milestone || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">${s.current_status || 'N/A'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="openMilestoneModal(${s.shipment_id})"
+                                class="text-indigo-600 hover:text-indigo-900 mr-3">
+                            <i class="fas fa-flag-checkered mr-1"></i>Milestone
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateShipmentSelects() {
+            const options = allShipments.map(s =>
+                `<option value="${s.shipment_id}">${s.booking_number} - ${s.container_number || 'Pending'}</option>`
+            ).join('');
+
+            document.getElementById('uploadShipmentId').innerHTML = '<option value="">-- Select Shipment --</option>' + options;
+            document.getElementById('exceptionShipmentId').innerHTML = '<option value="">-- Select Shipment --</option>' + options;
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(b => {
+                b.classList.remove('border-indigo-600', 'text-indigo-600');
+                b.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            const button = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+            button.classList.add('border-indigo-600', 'text-indigo-600');
+            button.classList.remove('border-transparent', 'text-gray-500');
+        }
+
+        async function createShipment(event) {
+            event.preventDefault();
+
+            const data = {
+                booking_number: document.getElementById('newBookingNumber').value,
+                container_number: document.getElementById('newContainerNumber').value,
+                origin_port: document.getElementById('newOriginPort').value,
+                destination_port: document.getElementById('newDestinationPort').value,
+                vessel_name: document.getElementById('newVesselName').value,
+                steamship_line: document.getElementById('newSteamshipLine').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/shipments`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Shipment created successfully!');
+                    document.getElementById('createShipmentForm').reset();
+                    await loadShipments();
+                    switchTab('shipments');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.error || 'Failed to create shipment'));
+                }
+            } catch (error) {
+                console.error('Error creating shipment:', error);
+                alert('Connection error');
+            }
+        }
+
+        async function uploadDocument(event) {
+            event.preventDefault();
+
+            const shipmentId = document.getElementById('uploadShipmentId').value;
+            const documentType = document.getElementById('uploadDocumentType').value;
+            const file = document.getElementById('uploadFile').files[0];
+
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('document_type', documentType);
+
+            try {
+                const response = await fetch(`${API_BASE}/shipments/${shipmentId}/documents/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    document.getElementById('uploadStatus').innerHTML =
+                        '<div class="p-4 bg-green-100 text-green-800 rounded">Document uploaded successfully!</div>';
+                    document.getElementById('uploadStatus').classList.remove('hidden');
+                    document.getElementById('uploadForm').reset();
+                    setTimeout(() => {
+                        document.getElementById('uploadStatus').classList.add('hidden');
+                    }, 3000);
+                } else {
+                    const error = await response.json();
+                    alert('Upload failed: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Connection error');
+            }
+        }
+
+        function openMilestoneModal(shipmentId) {
+            document.getElementById('milestoneShipmentId').value = shipmentId;
+            document.getElementById('milestoneModal').classList.remove('hidden');
+        }
+
+        function closeMilestoneModal() {
+            document.getElementById('milestoneModal').classList.add('hidden');
+            document.getElementById('milestoneForm').reset();
+        }
+
+        async function submitMilestone(event) {
+            event.preventDefault();
+
+            const shipmentId = document.getElementById('milestoneShipmentId').value;
+            const data = {
+                milestone_name: document.getElementById('milestoneName').value,
+                location: document.getElementById('milestoneLocation').value,
+                notes: document.getElementById('milestoneNotes').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/shipments/${shipmentId}/milestone`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Milestone updated successfully!');
+                    closeMilestoneModal();
+                    await loadShipments();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.error || 'Failed to update milestone'));
+                }
+            } catch (error) {
+                console.error('Error updating milestone:', error);
+                alert('Connection error');
+            }
+        }
+
+        async function createException(event) {
+            event.preventDefault();
+
+            const shipmentId = document.getElementById('exceptionShipmentId').value;
+            const data = {
+                exception_type: document.getElementById('exceptionType').value,
+                severity: document.getElementById('exceptionSeverity').value,
+                title: document.getElementById('exceptionTitle').value,
+                description: document.getElementById('exceptionDescription').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/shipments/${shipmentId}/exceptions`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Exception reported successfully! VHC team has been notified.');
+                    document.getElementById('exceptionForm').reset();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.error || 'Failed to report exception'));
+                }
+            } catch (error) {
+                console.error('Error reporting exception:', error);
+                alert('Connection error');
+            }
+        }
+
+        // Initialize with shipments tab
+        setTimeout(() => switchTab('shipments'), 100);
+    </script>
+</body>
+</html>
